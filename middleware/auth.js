@@ -1,20 +1,28 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/UserSchema");
 
-const authMiddleware = async (req, res) => {
+const authMiddleware = async (req, res, next) => {
   const token = req.cookies.notesUserToken;
+
+  if (!token) {
+    return res
+      .status(401)
+      .json({ message: "Access Denied: No Token Provided" });
+  }
+
   try {
-    if (token) {
-      const decode = jwt.verify(token, process.env.JWT_SECRET);
-      const user = await User.findById(decode.id);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-      req.user = user;
+    const decode = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decode.id);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
     }
+
+    req.user = user;
+    next();
   } catch (error) {
-    console.log(error);
-    return res.status(500).json({ message: "Invalid Token" });
+    console.error("Authentication Error:", error);
+    return res.status(401).json({ message: "Invalid or Expired Token" });
   }
 };
 

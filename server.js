@@ -1,18 +1,36 @@
-const express = require('express')
-const dotenv = require('dotenv')
-const Db = require('./controllers/Db')
+const express = require("express");
+const dotenv = require("dotenv");
+const Db = require("./controllers/Db");
+const NoteAPI = require("./routes/NoteRoutes");
+const UserAPI = require("./routes/UserRoutes");
+const cookieParser = require("cookie-parser");
+const cors = require("cors");
 
 dotenv.config();
-const app = express()
+const app = express();
 
-Db()
+// Connect to database
+Db();
 
-const PORT = process.env.PORT || 5000
+// Middleware
+app.use(express.json());
+app.use(cookieParser());
 
-app.get('/',(req,res) => {
-    res.send("Hello World!")
-})
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
-app.listen(PORT,() => {
-    console.log(`Server is running on port ${PORT}`)
-})
+const PORT = process.env.PORT || 5000;
+
+// Routes
+app.use("/api/v1/users", UserAPI);
+app.use("/api/v1/notes", NoteAPI);
+
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
